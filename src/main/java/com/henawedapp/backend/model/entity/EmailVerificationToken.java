@@ -2,13 +2,12 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * EmailVerificationToken entity - Ánh xạ tới bảng "email_verification_token".
- * Token xác thực email khi đăng ký tài khoản.
+ * EmailVerificationToken - Token xác thực email.
+ * Mỗi account chỉ có một token tại một thời điểm.
  */
 @Entity
 @Table(name = "email_verification_token")
@@ -16,6 +15,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = "account")
 public class EmailVerificationToken {
 
     @Id
@@ -35,9 +36,4 @@ public class EmailVerificationToken {
 
     @Column(name = "verified_at")
     private Instant verifiedAt;
-
-    @Override
-    public String toString() {
-        return "EmailVerificationToken{id=" + id + ", token='" + token + "'}";
-    }
 }

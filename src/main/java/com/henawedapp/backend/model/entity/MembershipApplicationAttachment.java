@@ -1,14 +1,13 @@
 package com.henawedapp.backend.model.entity;
 
+import com.henawedapp.backend.model.enums.AttachmentType;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * MembershipApplicationAttachment entity - Ánh xạ tới bảng "membership_application_attachment".
- * Tệp đính kèm của đơn đăng ký hội viên.
+ * MembershipApplicationAttachment - Tệp đính kèm của đơn đăng ký thành viên.
  */
 @Entity
 @Table(name = "membership_application_attachment")
@@ -16,22 +15,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = "application")
 public class MembershipApplicationAttachment {
-
-    /**
-     * Loại tệp đính kèm: ID_CARD, BUSINESS_LICENSE, PROOF_OF_ADDRESS, OTHER
-     */
-    public enum AttachmentType {
-        ID_CARD,
-        BUSINESS_LICENSE,
-        PROOF_OF_ADDRESS,
-        OTHER;
-
-        @Override
-        public String toString() {
-            return name();
-        }
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -43,7 +29,7 @@ public class MembershipApplicationAttachment {
     private MembershipApplication application;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "attachment_type", nullable = false, length = 50)
+    @Column(name = "attachment_type", nullable = false, length = 30)
     private AttachmentType attachmentType;
 
     @Column(name = "file_url", nullable = false, columnDefinition = "TEXT")
@@ -52,13 +38,12 @@ public class MembershipApplicationAttachment {
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
+    // ========== Lifecycle Callbacks ==========
+
     @PrePersist
     protected void onCreate() {
-        if (this.uploadedAt == null) this.uploadedAt = Instant.now();
-    }
-
-    @Override
-    public String toString() {
-        return "MembershipApplicationAttachment{id=" + id + ", attachmentType=" + attachmentType + "}";
+        if (this.uploadedAt == null) {
+            this.uploadedAt = Instant.now();
+        }
     }
 }

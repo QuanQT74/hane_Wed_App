@@ -2,14 +2,13 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * IndustryGroup entity - Ánh xạ tới bảng "industry_group".
- * Nhóm ngành nghề.
+ * IndustryGroup - Nhóm ngành nghề.
+ * Ví dụ: Công nghệ thông tin, Y tế, Giáo dục...
  */
 @Entity
 @Table(name = "industry_group")
@@ -17,6 +16,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = {"individualProfiles", "organizationProfiles"})
 public class IndustryGroup {
 
     @Id
@@ -30,21 +31,17 @@ public class IndustryGroup {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT(1)")
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
-    // ==================== Inverse Sides (mappedBy) ====================
+    // ========== Relationships ==========
 
-    @OneToMany(mappedBy = "industryGroup", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "industryGroup")
     @Builder.Default
     private List<IndividualProfile> individualProfiles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "industryGroup", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "industryGroup")
     @Builder.Default
     private List<OrganizationProfile> organizationProfiles = new ArrayList<>();
-
-    @Override
-    public String toString() {
-        return "IndustryGroup{id=" + id + ", code='" + code + "', name='" + name + "'}";
-    }
 }

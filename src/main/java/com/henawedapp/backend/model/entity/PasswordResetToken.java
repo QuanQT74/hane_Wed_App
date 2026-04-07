@@ -2,13 +2,11 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * PasswordResetToken entity - Ánh xạ tới bảng "password_reset_token".
- * Token đặt lại mật khẩu.
+ * PasswordResetToken - Token đặt lại mật khẩu.
  */
 @Entity
 @Table(name = "password_reset_token")
@@ -16,6 +14,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = "account")
 public class PasswordResetToken {
 
     @Id
@@ -35,9 +35,4 @@ public class PasswordResetToken {
 
     @Column(name = "used_at")
     private Instant usedAt;
-
-    @Override
-    public String toString() {
-        return "PasswordResetToken{id=" + id + ", token='" + token + "'}";
-    }
 }

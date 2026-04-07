@@ -2,23 +2,22 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Role entity - Ánh xạ tới bảng "role".
- * Vai trò người dùng trong hệ thống.
+ * Role - Vai trò người dùng trong hệ thống.
+ * Ví dụ: ADMIN, MEMBER, MODERATOR
  */
 @Entity
 @Table(name = "role")
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = "accountRoleMaps")
 public class Role {
 
     @Id
@@ -32,17 +31,13 @@ public class Role {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT(1)")
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
-    // ==================== Inverse Sides (mappedBy) ====================
+    // ========== Relationships ==========
 
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
     @Builder.Default
     private List<AccountRoleMap> accountRoleMaps = new ArrayList<>();
-
-    @Override
-    public String toString() {
-        return "Role{id=" + id + ", code='" + code + "', name='" + name + "'}";
-    }
 }

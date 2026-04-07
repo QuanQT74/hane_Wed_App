@@ -2,15 +2,12 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * EventType entity - Ánh xạ tới bảng "event_type".
- * Loại sự kiện.
+ * EventType - Loại sự kiện.
  */
 @Entity
 @Table(name = "event_type")
@@ -18,6 +15,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = "events")
 public class EventType {
 
     @Id
@@ -31,17 +30,13 @@ public class EventType {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT(1)")
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
 
-    // ==================== Inverse Sides (mappedBy) ====================
+    // ========== Relationships ==========
 
-    @OneToMany(mappedBy = "eventType", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "eventType")
     @Builder.Default
     private List<Event> events = new ArrayList<>();
-
-    @Override
-    public String toString() {
-        return "EventType{id=" + id + ", code='" + code + "', name='" + name + "'}";
-    }
 }

@@ -2,22 +2,21 @@ package com.henawedapp.backend.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * AccountRoleMap entity - Ánh xạ tới bảng "account_role_map".
- * Liên kết nhiều-nhiều giữa account và role.
+ * AccountRoleMap - Liên kết nhiều-nhiều giữa Account và Role.
+ * Mỗi account có thể có nhiều roles.
  */
 @Entity
 @Table(name = "account_role_map")
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = {"account", "role"})
+@ToString(exclude = {"account", "role"})
 public class AccountRoleMap {
 
     @Id
@@ -36,13 +35,12 @@ public class AccountRoleMap {
     @Column(name = "assigned_at", nullable = false)
     private Instant assignedAt;
 
+    // ========== Lifecycle Callbacks ==========
+
     @PrePersist
     protected void onCreate() {
-        if (this.assignedAt == null) this.assignedAt = Instant.now();
-    }
-
-    @Override
-    public String toString() {
-        return "AccountRoleMap{accountId=" + account.getId() + ", roleId=" + role.getId() + "}";
+        if (this.assignedAt == null) {
+            this.assignedAt = Instant.now();
+        }
     }
 }
