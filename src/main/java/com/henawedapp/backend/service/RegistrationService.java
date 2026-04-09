@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -34,6 +36,9 @@ public class RegistrationService {
     private final IndustryGroupRepository industryGroupRepository;
     private final NotificationService notificationService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
@@ -43,85 +48,124 @@ public class RegistrationService {
     public RegistrationResponse register(RegistrationRequest request) {
         log.info("Processing registration for email: {}", request.getEmail());
 
-        // ========== 1. Validate duplicate email/phone ==========
-        validateDuplicateEmail(request.getEmail());
-        validateDuplicatePhone(request.getPhone());
+        try {
+            // ========== 1. Validate duplicate email/phone ==========
+            validateDuplicateEmail(request.getEmail());
+            validateDuplicatePhone(request.getPhone());
 
-        // ========== 2. Tạo Account ==========
-        Account account = Account.builder()
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .passwordHash(hashPassword(request.getPassword())) // Cần implement password hashing
-                .status(com.henawedapp.backend.model.enums.AccountStatus.PENDING)
-                .isActivated(false)
-                .createdAt(Instant.now())
-                .build();
+            // ========== 2. Tạo Account ==========
+            log.info("Creating account for email: {}", request.getEmail());
+            Instant now = Instant.now();
+            Account account = Account.builder()
+                    .email(request.getEmail())
+                    .phone(request.getPhone())
+                    .passwordHash(hashPassword(request.getPassword()))
+                    .status(com.henawedapp.backend.model.enums.AccountStatus.PENDING)
+                    .isActivated(false)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .lastLoginAt(now)
+                    .build();
 
-        account = accountRepository.save(account);
-        log.info("Account created with ID: {}", account.getId());
+            entityManager.persist(account);
+            entityManager.flush();
+            log.info("Account persisted with ID: {}", account.getId());
 
-        // ========== 3. Tạo MembershipApplication ==========
-        MembershipApplication application = MembershipApplication.builder()
-                .account(account)
-                .requestedMemberType(request.getMemberType())
-                .applicantName(request.getDisplayName())
-                .applicantEmail(request.getEmail())
-                .applicantPhone(request.getPhone())
-                .status(ApplicationStatus.PENDING)
-                .submittedAt(Instant.now())
-                .build();
+            // ========== 3. Tạo MembershipApplication ==========
+            log.info("Creating membership application for account: {}", account.getId());
+            MembershipApplication application = MembershipApplication.builder()
+                    .account(account)
+                    .requestedMemberType(request.getMemberType())
+                    .applicantName(request.getDisplayName())
+                    .applicantEmail(request.getEmail())
+                    .applicantPhone(request.getPhone())
+                    .status(ApplicationStatus.PENDING)
+                    .submittedAt(now)
+                    .createdAt(now)
+                    .build();
 
-        application = membershipApplicationRepository.save(application);
-        log.info("MembershipApplication created with ID: {}", application.getId());
+            entityManager.persist(application);
+            entityManager.flush();
+            log.info("MembershipApplication persisted with ID: {}", application.getId());
 
-        // ========== 4. Tạo MemberProfile ==========
-        String memberCode = generateMemberCode();
-        MemberProfile memberProfile = MemberProfile.builder()
-                .account(account)
-                .memberCode(memberCode)
-                .profileType(request.getMemberType())
-                .displayName(request.getDisplayName())
-                .contactEmail(request.getContactEmail() != null ? request.getContactEmail() : request.getEmail())
-                .contactPhone(request.getContactPhone() != null ? request.getContactPhone() : request.getPhone())
-                .bio(request.getBio())
-                .isActive(false) // Chưa active cho đến khi được duyệt
-                .build();
+            // ========== 4. Tạo MemberProfile ==========
+            log.info("Creating member profile for account: {}", account.getId());
+            String memberCode = generateMemberCode();
+            MemberProfile memberProfile = MemberProfile.builder()
+                    .account(account)
+                    .memberCode(memberCode)
+                    .profileType(request.getMemberType())
+                    .displayName(request.getDisplayName())
+                    .contactEmail(request.getEmail())
+                    .contactPhone(request.getPhone())
+                    .bio(request.getBio())
+                    .isActive(false)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
 
-        memberProfile = memberProfileRepository.save(memberProfile);
-        log.info("MemberProfile created with ID: {}, memberCode: {}", memberProfile.getId(), memberCode);
+            // Use EntityManager directly for better control
+            entityManager.persist(memberProfile);
+            entityManager.flush();
+            log.info("MemberProfile persisted directly - ID: {}", memberProfile.getId());
 
-        // ========== 5. Tạo IndividualProfile hoặc OrganizationProfile ==========
+            if (memberProfile.getId() == null) {
+                throw new RuntimeException("MemberProfile ID is null after persist!");
+            }
+
+            // ========== 5. Tạo IndividualProfile hoặc OrganizationProfile ==========
+            log.info("Creating {} profile for member: {}", request.getMemberType(), memberProfile.getId());
+            createMemberTypeProfile(request, memberProfile);
+
+            // ========== 6. Gửi thông báo xác nhận ==========
+            sendConfirmationNotification(account, request.getDisplayName());
+
+            log.info("Registration completed successfully for email: {}", request.getEmail());
+
+            return RegistrationResponse.builder()
+                    .accountId(account.getId())
+                    .applicationId(application.getId())
+                    .email(account.getEmail())
+                    .memberType(request.getMemberType().name())
+                    .status(ApplicationStatus.PENDING.name())
+                    .message("Đăng ký thành công! Vui lòng chờ quản trị viên phê duyệt.")
+                    .submittedAt(application.getSubmittedAt())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Registration failed for email: {}, error: {}", request.getEmail(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Tạo IndividualProfile hoặc OrganizationProfile.
+     */
+    private void createMemberTypeProfile(RegistrationRequest request, MemberProfile memberProfile) {
         if (request.getMemberType() == MemberType.INDIVIDUAL) {
             createIndividualProfile(request, memberProfile);
         } else {
             createOrganizationProfile(request, memberProfile);
         }
-
-        // ========== 6. Gửi thông báo xác nhận ==========
-        sendConfirmationNotification(account, request.getDisplayName());
-
-        log.info("Registration completed successfully for email: {}", request.getEmail());
-
-        return RegistrationResponse.builder()
-                .accountId(account.getId())
-                .applicationId(application.getId())
-                .email(account.getEmail())
-                .memberType(request.getMemberType().name())
-                .status(ApplicationStatus.PENDING.name())
-                .message("Đăng ký thành công! Vui lòng chờ quản trị viên phê duyệt.")
-                .submittedAt(application.getSubmittedAt())
-                .build();
     }
 
     /**
      * Tạo IndividualProfile.
      */
     private void createIndividualProfile(RegistrationRequest request, MemberProfile memberProfile) {
+        log.info("createIndividualProfile - memberProfile.id = {}", memberProfile.getId());
+
+        RegistrationRequest.IndividualProfileRequest individualReq = request.getIndividualProfile();
+        if (individualReq == null) {
+            throw new IllegalArgumentException("Individual profile data is required for INDIVIDUAL member type");
+        }
+
         IndividualProfile individualProfile = IndividualProfile.builder()
                 .memberProfile(memberProfile)
-                .fullName(request.getFullName() != null ? request.getFullName() : request.getDisplayName())
-                .occupation(request.getOccupation())
-                .addressText(request.getAddressText())
+                .memberProfileId(memberProfile.getId())
+                .fullName(individualReq.getFullName() != null ? individualReq.getFullName() : request.getDisplayName())
+                .occupation(individualReq.getOccupation())
+                .addressText(individualReq.getAddressText())
                 .build();
 
         // Set industry group nếu có
@@ -132,7 +176,8 @@ public class RegistrationService {
             individualProfile.setIndustryGroup(industryGroup);
         }
 
-        individualProfileRepository.save(individualProfile);
+        entityManager.persist(individualProfile);
+        entityManager.flush();
         log.info("IndividualProfile created for member: {}", memberProfile.getId());
     }
 
@@ -140,13 +185,21 @@ public class RegistrationService {
      * Tạo OrganizationProfile.
      */
     private void createOrganizationProfile(RegistrationRequest request, MemberProfile memberProfile) {
+        log.info("createOrganizationProfile - memberProfile.id = {}", memberProfile.getId());
+
+        RegistrationRequest.OrganizationProfileRequest orgReq = request.getOrganizationProfile();
+        if (orgReq == null) {
+            throw new IllegalArgumentException("Organization profile data is required for ORGANIZATION member type");
+        }
+
         OrganizationProfile organizationProfile = OrganizationProfile.builder()
                 .memberProfile(memberProfile)
-                .organizationName(request.getOrganizationName() != null ? request.getOrganizationName() : request.getDisplayName())
-                .legalRepresentative(request.getLegalRepresentative())
-                .website(request.getWebsite())
-                .productServiceSummary(request.getProductServiceSummary())
-                .addressText(request.getOrgAddressText())
+                .memberProfileId(memberProfile.getId())
+                .organizationName(orgReq.getOrganizationName() != null ? orgReq.getOrganizationName() : request.getDisplayName())
+                .legalRepresentative(orgReq.getLegalRepresentative())
+                .website(orgReq.getWebsite())
+                .productServiceSummary(orgReq.getProductServiceSummary())
+                .addressText(orgReq.getAddressText())
                 .build();
 
         // Set industry group nếu có
@@ -157,7 +210,8 @@ public class RegistrationService {
             organizationProfile.setIndustryGroup(industryGroup);
         }
 
-        organizationProfileRepository.save(organizationProfile);
+        entityManager.persist(organizationProfile);
+        entityManager.flush();
         log.info("OrganizationProfile created for member: {}", memberProfile.getId());
     }
 

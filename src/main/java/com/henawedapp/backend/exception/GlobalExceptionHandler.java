@@ -114,9 +114,12 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message("Đã xảy ra lỗi không mong muốn")
+                .message("Đã xảy ra lỗi không mong muốn: " + ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
+
+        // Log the full exception for debugging
+        ex.printStackTrace();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }

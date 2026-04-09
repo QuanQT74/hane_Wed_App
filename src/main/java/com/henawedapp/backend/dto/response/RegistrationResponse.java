@@ -24,4 +24,5 @@ public class RegistrationResponse {
     private String status;
     private String message;
     private Instant submittedAt;
+    
 }

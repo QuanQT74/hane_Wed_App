@@ -38,4 +38,13 @@ public class IndividualProfile {
 
     @Column(name = "address_text", columnDefinition = "TEXT")
     private String addressText;
+
+    // ========== Lifecycle Callbacks ==========
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.memberProfile != null && this.memberProfile.getId() != null) {
+            this.memberProfileId = this.memberProfile.getId();
+        }
+    }
 }
