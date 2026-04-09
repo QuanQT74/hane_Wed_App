@@ -105,6 +105,86 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<ValidationErrorResponse> handleInvalidOtpException(
+            InvalidOtpException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Invalid OTP")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(OtpExpiredException.class)
+    public ResponseEntity<ValidationErrorResponse> handleOtpExpiredException(
+            OtpExpiredException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.GONE.value())
+                .error("OTP Expired")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.GONE).body(response);
+    }
+
+    @ExceptionHandler(MaxOtpAttemptsExceededException.class)
+    public ResponseEntity<ValidationErrorResponse> handleMaxOtpAttemptsExceededException(
+            MaxOtpAttemptsExceededException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                .error("Max OTP Attempts Exceeded")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+    }
+
+    @ExceptionHandler(PendingRegistrationNotFoundException.class)
+    public ResponseEntity<ValidationErrorResponse> handlePendingRegistrationNotFoundException(
+            PendingRegistrationNotFoundException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Pending Registration Not Found")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(RegistrationExpiredException.class)
+    public ResponseEntity<ValidationErrorResponse> handleRegistrationExpiredException(
+            RegistrationExpiredException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.GONE.value())
+                .error("Registration Expired")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.GONE).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ValidationErrorResponse> handleGenericException(
             Exception ex,

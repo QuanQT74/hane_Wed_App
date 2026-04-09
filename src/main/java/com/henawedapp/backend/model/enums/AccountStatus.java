@@ -2,7 +2,8 @@ package com.henawedapp.backend.model.enums;
 
 /**
  * Trạng thái tài khoản người dùng.
- * PENDING - Chờ kích hoạt
+ * PENDING - Chờ kích hoạt (dùng cho legacy)
+ * PENDING_APPROVAL - Chờ phê duyệt (sau khi đăng ký với OTP)
  * ACTIVE - Đang hoạt động
  * SUSPENDED - Tạm ngưng
  * BANNED - Bị cấm
@@ -10,6 +11,7 @@ package com.henawedapp.backend.model.enums;
  */
 public enum AccountStatus {
     PENDING,
+    PENDING_APPROVAL,
     ACTIVE,
     SUSPENDED,
     BANNED,
