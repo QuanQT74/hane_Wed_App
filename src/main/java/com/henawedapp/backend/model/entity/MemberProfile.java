@@ -74,6 +74,12 @@ public class MemberProfile {
     @Column(name = "approved_at")
     private Instant approvedAt;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false, updatable = false)
+    private Instant updatedAt;
+
     // ========== Relationships ==========
 
     @OneToOne(mappedBy = "memberProfile", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -115,4 +121,17 @@ public class MemberProfile {
     @OneToMany(mappedBy = "memberProfile", cascade = CascadeType.ALL)
     @Builder.Default
     private List<MemberHonor> memberHonors = new ArrayList<>();
+
+    // ========== Lifecycle Callbacks ==========
+
+    @PrePersist
+    protected void onCreate() {
+        Instant now = Instant.now();
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = now;
+        }
+    }
 }

@@ -49,8 +49,14 @@ public class MembershipApplication {
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.PENDING;
 
-    @Column(name = "submitted_at", nullable = false)
+    @Column(name = "submitted_at", nullable = false, updatable = false)
     private Instant submittedAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false, updatable = false)
+    private Instant updatedAt;
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
@@ -69,11 +75,15 @@ public class MembershipApplication {
     private List<MembershipApplicationAttachment> attachments = new ArrayList<>();
 
     // ========== Lifecycle Callbacks ==========
+@PrePersist
+    public void prePersist() {
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
 
-    @PrePersist
-    protected void onCreate() {
-        if (this.submittedAt == null) {
-            this.submittedAt = Instant.now();
-        }
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now();
     }
 }

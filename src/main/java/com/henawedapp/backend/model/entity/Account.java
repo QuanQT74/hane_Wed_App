@@ -33,8 +33,10 @@ public class Account {
     @Column(name = "email", unique = true, nullable = false, length = 255)
     private String email;
 
+    
     @Column(name = "phone", unique = true, length = 20)
     private String phone;
+
 
     @Column(name = "password_hash", nullable = false, columnDefinition = "TEXT")
     private String passwordHash;
@@ -44,7 +46,7 @@ public class Account {
     @Builder.Default
     private AccountStatus status = AccountStatus.PENDING;
 
-    @Column(name = "is_activated", nullable = false)
+    @Column(name = "is_activated", nullable = false )
     @Builder.Default
     private Boolean isActivated = false;
 
@@ -53,6 +55,9 @@ public class Account {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at",nullable = false, updatable = false)
+    private Instant updatedAt;
 
     // ========== Relationships ==========
 
@@ -86,8 +91,12 @@ public class Account {
 
     @PrePersist
     protected void onCreate() {
+        Instant now = Instant.now();
         if (this.createdAt == null) {
-            this.createdAt = Instant.now();
+            setCreatedAt(now);
+        }
+        if (this.updatedAt == null) {
+            setUpdatedAt(now);
         }
     }
 }
