@@ -185,6 +185,70 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.GONE).body(response);
     }
 
+    @ExceptionHandler(ForbiddenAccessException.class)
+    public ResponseEntity<ValidationErrorResponse> handleForbiddenAccessException(
+            ForbiddenAccessException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.FORBIDDEN.value())
+                .error("Forbidden")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(InvalidMemberTypeException.class)
+    public ResponseEntity<ValidationErrorResponse> handleInvalidMemberTypeException(
+            InvalidMemberTypeException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Invalid Member Type")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ResponseEntity<ValidationErrorResponse> handleInvalidFileException(
+            InvalidFileException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Invalid File")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ValidationErrorResponse> handleAuthenticationException(
+            AuthenticationException ex,
+            HttpServletRequest request) {
+
+        ValidationErrorResponse response = ValidationErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ValidationErrorResponse> handleGenericException(
             Exception ex,

@@ -35,6 +35,12 @@ public class ProfileAttachment {
     @Column(name = "file_url", nullable = false, columnDefinition = "TEXT")
     private String fileUrl;
 
+    @Column(name = "file_name", nullable = false, length = 255)
+    private String fileName;
+
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize;
+
     @Column(name = "is_public", nullable = false)
     @Builder.Default
     private Boolean isPublic = false;
