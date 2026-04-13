@@ -1,13 +1,15 @@
 package com.henawedapp.backend.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
  * Mock implementation của EmailService.
- * Trong môi trường production, thay thế bằng implementation thực sự (Spring Mail, SendGrid, etc.)
+ * Chỉ active khi profile = "mock"
  */
 @Service
+@Profile("mock")
 @Slf4j
 public class MockEmailService implements EmailService {
 

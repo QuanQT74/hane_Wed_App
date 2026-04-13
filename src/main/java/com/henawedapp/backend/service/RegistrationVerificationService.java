@@ -12,6 +12,8 @@ import com.henawedapp.backend.model.enums.*;
 import com.henawedapp.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Async
 public class RegistrationVerificationService {
 
     private static final int OTP_LENGTH = 6;
@@ -50,9 +53,6 @@ public class RegistrationVerificationService {
     private final OrganizationProfileDataRepository organizationProfileDataRepository;
     private final AccountRepository accountRepository;
     private final MemberProfileRepository memberProfileRepository;
-    private final MembershipApplicationRepository membershipApplicationRepository;
-    private final IndividualProfileRepository individualProfileRepository;
-    private final OrganizationProfileRepository organizationProfileRepository;
     private final IndustryGroupRepository industryGroupRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
@@ -427,6 +427,10 @@ public class RegistrationVerificationService {
                 .build();
 
         entityManager.persist(memberProfile);
+
+        // Set back-reference on Account (owning side of relationship)
+        account.setMemberProfile(memberProfile);
+        entityManager.merge(account);
         entityManager.flush();
 
         // 4. Tạo IndividualProfile hoặc OrganizationProfile
