@@ -1,6 +1,4 @@
 package com.henawedapp.backend.model.entity;
-
-import com.henawedapp.backend.model.enums.MemberType;
 import jakarta.persistence.*;
 import lombok.*;
 
